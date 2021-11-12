@@ -247,20 +247,11 @@ public final class AssetTransfer implements ContractInterface {
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
     public Asset DuplicateAsset(final Context ctx, final String assetID, final String owner) {
-        ChaincodeStub stub = ctx.getStub();
-
-        String assetJSON = stub.getStringState(assetID);
-
-        if (assetJSON == null || assetJSON.isEmpty()) {
-            String errorMessage = String.format("Asset %s does not exist", assetID);
-            System.out.println(errorMessage);
-            throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_NOT_FOUND.toString());
-        }
-
         Asset asset = ReadAsset(ctx, assetID);
 
         int i = asset.getAssetID();
-
+        
+        // Create New AssetID by incrementing the ID of the previous asset until a unique ID is found
         while(true) {
             if (AssetExists(ctx, i)) {
                 i += 1;
@@ -269,12 +260,8 @@ public final class AssetTransfer implements ContractInterface {
                 break;
             }
         }
-
-        Asset duplicateAsset = new Asset(newAssetID, asset.getColor(), asset.getSize(), owner, asset.getAppraisedValue());
-        //Use a Genson to conver the Asset into string, sort it alphabetically and serialize it into a json string
-        String sortedJson = genson.serialize(newAsset);
-        stub.putStringState(newAssetID, sortedJson);
-
-        return asset;
+        
+        // Create the new duplicate asset
+        return CreateAsset(ctx, newAssetID, asset.getColor(), asset.getSize(), owner, asset.getAppraisedValue());
     }
 }
