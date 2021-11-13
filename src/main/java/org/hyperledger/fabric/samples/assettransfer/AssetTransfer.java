@@ -242,23 +242,21 @@ public final class AssetTransfer implements ContractInterface {
      *
      * @param ctx the transaction context
      * @param assetID the ID of the asset that will be duplicated
+     * @param newAssetID the ID of the duplicated asset
      * @param owner the owner of the new asset
      * @return the duplicated asset
      */
     @Transaction(intent = Transaction.TYPE.SUBMIT)
-    public Asset DuplicateAsset(final Context ctx, final String assetID, final String owner) {
+    public Asset DuplicateAsset(final Context ctx, final String oldAssetID, final String newAssetID, final String owner) {
+        
+        // Read the asset that has to be duplicated
         Asset asset = ReadAsset(ctx, assetID);
 
-        int i = asset.getAssetID();
-        
-        // Create New AssetID by incrementing the ID of the previous asset until a unique ID is found
-        while(true) {
-            if (AssetExists(ctx, i)) {
-                i += 1;
-            } else {
-                int newAssetID = i;
-                break;
-            }
+        // Check if newAssetID is already existent
+        if (AssetExists(ctx, newAssetID)) {
+            String errorMessage = String.format("Asset %s already exists", assetID);
+            System.out.println(errorMessage);
+            throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_ALREADY_EXISTS.toString());
         }
         
         // Create the new duplicate asset
